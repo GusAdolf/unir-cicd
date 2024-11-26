@@ -13,7 +13,11 @@ test-unit:
 	-docker rm unit-tests
 
 test-api:
-	-docker network create calc-test-api
+	# Verifica si la red ya existe antes de intentar crearla
+	docker network ls --filter "name=calc-test-api" --format "{{.Name}}" | findstr calc-test-api >nul || (
+		docker network create calc-test-api
+		echo "Network calc-test-api created."
+	)
 	docker run -d --network calc-test-api --env PYTHONPATH=/opt/calc --name apiserver --env FLASK_APP=app/api.py -p 5000:5000 -w /opt/calc calculator-app:latest flask run --host=0.0.0.0
 	-docker run --network calc-test-api --name api-tests --env PYTHONPATH=/opt/calc --env BASE_URL=http://apiserver:5000/ -w /opt/calc calculator-app:latest pytest --junit-xml=results/api_result.xml -m api
 	docker cp api-tests:/opt/calc/results ./
@@ -25,7 +29,10 @@ test-api:
 
 test-e2e:
 	# Verifica si la red ya existe antes de intentar crearla
-	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul || (docker network create calc-test-e2e && echo "Network calc-test-e2e created.")
+	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul || (
+		docker network create calc-test-e2e
+		echo "Network calc-test-e2e created."
+	)
 	# Verifica si los contenedores existen antes de detenerlos o eliminarlos
 	docker ps -q --filter "name=apiserver" | findstr . >nul && docker stop apiserver || echo "No container named apiserver to stop"
 	docker ps -a -q --filter "name=apiserver" | findstr . >nul && docker rm --force apiserver || echo "No container named apiserver to remove"
@@ -56,7 +63,11 @@ stop-web:
 	docker stop calc-web
 
 start-sonar-server:
-	-docker network create calc-sonar
+	# Verifica si la red ya existe antes de intentar crearla
+	docker network ls --filter "name=calc-sonar" --format "{{.Name}}" | findstr calc-sonar >nul || (
+		docker network create calc-sonar
+		echo "Network calc-sonar created."
+	)
 	docker run -d --rm --stop-timeout 60 --network calc-sonar --name sonarqube-server -p 9000:9000 --volume $(CURDIR)/sonar/data:/opt/sonarqube/data --volume $(CURDIR)/sonar/logs:/opt/sonarqube/logs sonarqube:8.3.1-community
 
 stop-sonar-server:
