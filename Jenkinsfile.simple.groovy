@@ -22,13 +22,24 @@ pipeline {
                 archiveArtifacts artifacts: 'results/*.xml' // Archiva los resultados de las pruebas unitarias
             }
         }
+
+
         stage('API tests') {
-            steps {
-                echo 'Running API tests...'
-                bat 'make test-api' // Comando para ejecutar pruebas de API
-                archiveArtifacts artifacts: 'results/api/*.xml' // Archiva los resultados de las pruebas API
+         steps {
+        echo 'Running API tests...'
+        bat 'make test-api'
+        // Verificar que el archivo exista antes de intentar archivarlo
+        script {
+            if (!fileExists('results/api/api_result.xml')) {
+                error "API test results not found! Ensure the file is copied correctly."
             }
         }
+        archiveArtifacts artifacts: 'results/api/*.xml'
+            }
+        }       
+
+       
+       
         stage('E2E tests') {
             steps {
                 echo 'Running E2E tests...'
