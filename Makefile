@@ -25,7 +25,7 @@ test-api:
 
 test-e2e:
 	# Verifica si la red ya existe antes de intentar crearla
-	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul || docker network create calc-test-e2e
+	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul || (docker network create calc-test-e2e && echo "Network calc-test-e2e created.")
 	# Verifica si los contenedores existen antes de detenerlos o eliminarlos
 	docker ps -q --filter "name=apiserver" | findstr . >nul && docker stop apiserver || echo "No container named apiserver to stop"
 	docker ps -a -q --filter "name=apiserver" | findstr . >nul && docker rm --force apiserver || echo "No container named apiserver to remove"
@@ -44,10 +44,11 @@ test-e2e:
 	# Copia los resultados de las pruebas
 	docker cp e2e-tests:/results ./ || echo "No results to copy from e2e-tests"
 	# Limpia los contenedores y la red
-	docker rm --force apiserver || echo "No container named apiserver to remove"
-	docker rm --force calc-web || echo "No container named calc-web to remove"
-	docker rm --force e2e-tests || echo "No container named e2e-tests to remove"
-	docker network rm calc-test-e2e || echo "No network named calc-test-e2e to remove"
+	docker ps -a -q --filter "name=apiserver" | findstr . >nul && docker rm --force apiserver || echo "No container named apiserver to remove"
+	docker ps -a -q --filter "name=calc-web" | findstr . >nul && docker rm --force calc-web || echo "No container named calc-web to remove"
+	docker ps -a -q --filter "name=e2e-tests" | findstr . >nul && docker rm --force e2e-tests || echo "No container named e2e-tests to remove"
+	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul && docker network rm calc-test-e2e || echo "No network named calc-test-e2e to remove"
+
 
 
 run-web:
