@@ -2,18 +2,11 @@ pipeline {
     agent {
         label 'docker'
     }
-  
-
     stages {
-          stage('Cleanup') {
-            steps {
-                cleanWs()
-            }
-        }
         stage('Source') {
             steps {
                 echo 'Cloning repository...'
-                git 'https://github.com/srayuso/unir-cicd.git'
+                git 'https://github.com/GusAdolf/unir-cicd.git' // Cambia esto a tu repositorio
             }
         }
         stage('Build') {
