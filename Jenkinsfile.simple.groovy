@@ -12,47 +12,42 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                bat 'make build' // Cambiado a bat para entornos Windows
+                bat 'make build'
             }
         }
         stage('Unit tests') {
             steps {
                 echo 'Running unit tests...'
-                bat 'make test-unit' // Cambiado a bat para entornos Windows
-                archiveArtifacts artifacts: 'results/*.xml' // Archiva los resultados de las pruebas unitarias
+                bat 'make test-unit'
+                archiveArtifacts artifacts: 'results/*.xml'
             }
         }
-
-
         stage('API tests') {
-         steps {
-        echo 'Running API tests...'
-        bat 'make test-api'
-        // Verificar que el archivo exista antes de intentar archivarlo
-        script {
-            if (!fileExists('results/api/api_result.xml')) {
-                error "API test results not found! Ensure the file is copied correctly."
+            steps {
+                echo 'Running API tests...'
+                bat 'make test-api'
+                bat 'dir /s' // Lista los archivos en el workspace para depurar rutas
+                script {
+                    if (!fileExists('results/api/api_result.xml')) {
+                        error "API test results not found! Ensure the file is copied correctly."
+                    }
+                }
+                archiveArtifacts artifacts: 'results/api/*.xml'
             }
         }
-        archiveArtifacts artifacts: 'results/api/*.xml'
-            }
-        }       
-
-       
-       
         stage('E2E tests') {
             steps {
                 echo 'Running E2E tests...'
-                bat 'make test-e2e' // Comando para ejecutar pruebas E2E
-                archiveArtifacts artifacts: 'results/e2e/*.xml' // Archiva los resultados de las pruebas E2E
+                bat 'make test-e2e'
+                archiveArtifacts artifacts: 'results/e2e/*.xml'
             }
         }
     }
     post {
         always {
             echo 'Archiving test results and cleaning workspace...'
-            junit 'results/**/*_result.xml' // Publica los resultados como informes de JUnit
-            cleanWs() // Limpia el workspace al final
+            junit 'results/**/*.xml'
+            cleanWs()
         }
         failure {
             echo 'Pipeline failed. Simulating email notification...'
@@ -60,10 +55,6 @@ pipeline {
                 def jobName = env.JOB_NAME ?: 'Unknown Job'
                 def buildNumber = env.BUILD_NUMBER ?: 'Unknown Build'
                 echo "Sending email: Pipeline failed - Job: ${jobName}, Build: #${buildNumber}"
-                // Puedes agregar el bloque mail descomentando esto:
-                // mail to: 'team@example.com',
-                //      subject: "Pipeline failed: ${jobName} #${buildNumber}",
-                //      body: "The pipeline ${jobName} failed during execution. Build number: ${buildNumber}."
             }
         }
     }
