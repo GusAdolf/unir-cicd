@@ -24,24 +24,25 @@ test-api:
 	docker network rm calc-test-api || true
 
 test-e2e:
-	docker network create calc-test-e2e || true
-	docker ps -q --filter "name=apiserver" | findstr . && docker stop apiserver || echo "No container named apiserver to stop"
-	docker ps -a -q --filter "name=apiserver" | findstr . && docker rm --force apiserver || echo "No container named apiserver to remove"
-	docker ps -q --filter "name=calc-web" | findstr . && docker stop calc-web || echo "No container named calc-web to stop"
-	docker ps -a -q --filter "name=calc-web" | findstr . && docker rm --force calc-web || echo "No container named calc-web to remove"
-	docker ps -q --filter "name=e2e-tests" | findstr . && docker stop e2e-tests || echo "No container named e2e-tests to stop"
-	docker ps -a -q --filter "name=e2e-tests" | findstr . && docker rm --force e2e-tests || echo "No container named e2e-tests to remove"
+	docker network ls --filter "name=calc-test-e2e" --format "{{.Name}}" | findstr calc-test-e2e >nul || docker network create calc-test-e2e
+	docker ps -q --filter "name=apiserver" | findstr . >nul && docker stop apiserver || echo "No container named apiserver to stop"
+	docker ps -a -q --filter "name=apiserver" | findstr . >nul && docker rm --force apiserver || echo "No container named apiserver to remove"
+	docker ps -q --filter "name=calc-web" | findstr . >nul && docker stop calc-web || echo "No container named calc-web to stop"
+	docker ps -a -q --filter "name=calc-web" | findstr . >nul && docker rm --force calc-web || echo "No container named calc-web to remove"
+	docker ps -q --filter "name=e2e-tests" | findstr . >nul && docker stop e2e-tests || echo "No container named e2e-tests to stop"
+	docker ps -a -q --filter "name=e2e-tests" | findstr . >nul && docker rm --force e2e-tests || echo "No container named e2e-tests to remove"
 	docker run -d --network calc-test-e2e --env PYTHONPATH=/opt/calc --name apiserver --env FLASK_APP=app/api.py -p 5000:5000 -w /opt/calc calculator-app:latest flask run --host=0.0.0.0
 	docker run -d --network calc-test-e2e --name calc-web -p 80:80 calc-web
-	docker create --network calc-test-e2e --name e2e-tests cypress/included:4.9.0 --browser chrome || true
+	docker create --network calc-test-e2e --name e2e-tests cypress/included:4.9.0 --browser chrome
 	docker cp ./test/e2e/cypress.json e2e-tests:/cypress.json
 	docker cp ./test/e2e/cypress e2e-tests:/cypress
 	docker start -a e2e-tests || true
-	docker cp e2e-tests:/results ./ || true
-	docker rm --force apiserver || true
-	docker rm --force calc-web || true
-	docker rm --force e2e-tests || true
-	docker network rm calc-test-e2e || true
+	docker cp e2e-tests:/results ./ || echo "No results to copy from e2e-tests"
+	docker rm --force apiserver || echo "No container named apiserver to remove"
+	docker rm --force calc-web || echo "No container named calc-web to remove"
+	docker rm --force e2e-tests || echo "No container named e2e-tests to remove"
+	docker network rm calc-test-e2e || echo "No network named calc-test-e2e to remove"
+
 
 run-web:
 	docker run --rm --volume `pwd`/web:/usr/share/nginx/html  --volume `pwd`/web/constants.local.js:/usr/share/nginx/html/constants.js --name calc-web -p 80:80 nginx
