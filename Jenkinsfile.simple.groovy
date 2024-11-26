@@ -2,7 +2,14 @@ pipeline {
     agent {
         label 'docker'
     }
+  
+
     stages {
+          stage('Cleanup') {
+            steps {
+                cleanWs()
+            }
+        }
         stage('Source') {
             steps {
                 echo 'Cloning repository...'
